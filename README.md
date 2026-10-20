@@ -1,13 +1,27 @@
-# ryva
 
+tracaa tracaa ... tracaa tracaa ... tracaa tracaa ta ta ta ta
 
-Vehiculos y Robots Autonomos para Fruticultura(ryva)
+Tractores Antiguos Autónomos (tracaa) del Alto Valle
 ====================================================
+
+Equipamiento y sistemas de navegación autónoma para tractores antiguos del Alto Valle.
 
 En este repositorio se encuentra el código fuente de todas las capas
 de software que componen la herramienta experimental desarrollada
 durante el doctorado, para una solución de navegación autónoma futura
 en tractores antiguos del Alto Valle de Río Negro y Neuquen.
+
+Varios sub proyectos
+--------------------
+
+caja\_adquisidora: drivers y software de adquisición de datos desde los sensores.
+
+lidar\_nuevo: driver para el LIDAR de bajo costo.
+
+tacometro: sistema embebido que repota velocidad (m/s) en base a un ultrasonido sobre rueda trasera.
+
+navegacion\_inercial: INS que utiliza los datos de la IMU (acelerometros, girocopios, magnetómetro) y reporta la pose relativa.
+
 
 Para Adquirir a la maxima frecuencia utilizando todos los sensores:
 
