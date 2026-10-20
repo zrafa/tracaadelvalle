@@ -1,0 +1,18 @@
+
+# Configuración básica
+set terminal wxt enhanced font 'Arial,10' size 1200,600
+set title "Trayectoria "
+set xlabel "Este Oeste"
+set ylabel "Norte Sur"
+set grid
+set key outside right
+
+set size ratio -1
+
+# Graficar ambas columnas con líneas
+# plot "trayecto3.txt" using 6:8 with lines lw 2 lc rgb "red" title "Trayectoria"
+plot "tray3.2.txt" using 7:9 with points pt 1 ps 1 lc rgb "green" title "INS", \
+ "tray3.3.txt" using 7:9 with points pt 1 ps 1 lc rgb "red" title "velocidad", \
+ "tray3.1.txt" using 8:10 with points pt 4 ps 1 lc rgb "blue" title "pos-fingerprint"
+
+pause -1 "Presiona Enter para salir"
