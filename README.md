@@ -2,7 +2,6 @@
 trac..caa ... trac..caaa ... tracaa ... tracaa taca taca tacatacatatata....
 
 (Sonido mecánico irregular entrecortado, producido, al arrancar en frío
-
 por un motor diesel de un tractor antiguo del alto valle.)
 
 Tractores Antiguos Autónomos (tracaa) del Alto Valle
