@@ -21,7 +21,7 @@ caja\_adquisidora: drivers y software de adquisición de datos desde los sensore
 
 lidar\_nuevo: driver para el LIDAR de bajo costo.
 
-tacometro: sistema embebido que repota velocidad (m/s) en base a un ultrasonido sobre rueda trasera.
+tacometro: sistema embebido que reporta velocidad (m/s) en base a un ultrasonido sobre rueda trasera.
 
 navegacion\_inercial: INS que utiliza los datos de la IMU (acelerometros, girocopios, magnetómetro) y reporta la pose relativa.
 
