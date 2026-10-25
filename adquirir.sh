@@ -23,7 +23,10 @@ if ! [ "`ls ${1}/* | wc -l`" -eq 0 ] ; then
 	exit 1
 fi
 
+# 10hz
+echo -e '\xB5\x62\x06\x08\x06\x00\x64\x00\x01\x00\x01\x00\x7A\x12' > /dev/ttyACM0
 ./caja_adquisidora/gps_time/gps_time >> ${1}/gps.txt &
+
 ./caja_adquisidora/lidar-servo/lidar_servo_pc >> ${1}/lidar.txt &
 (cd ./caja_adquisidora/IMU/ && sudo python imu.py) >> ${1}/imu.txt &
 (cd ./caja_adquisidora/IMU/ && sudo python magnetometro.py) >> ${1}/magnetometro.txt &
