@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 /* PUERTO SERIAL de ublox (verificar con dmesg o ls /dev/ */
-#define serial_dev "/dev/ttyUSB0"
+#define serial_dev "/dev/ttyUSB1"
 
 int serial_port;
 struct termios tty;
@@ -123,8 +123,10 @@ int main()
 		t = read_buf;
 		c = 0;
 		while (c < num_bytes) {
-			if ((*t) == '\r')
+			if ((*t) == '\r') {
 				printf(" %lld %lld ", microsegundos(), microsegundos()/1000);
+				fflush(0);
+			}
 			printf("%c",*t);
 			c++;
 			t++;
