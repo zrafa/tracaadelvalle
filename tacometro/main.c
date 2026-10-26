@@ -63,7 +63,8 @@ void main()
 		}
 
 		/* obtener una distancia del ultrasound, calibramos, detectamos */
- 		val = (uint16_t) ultrasound_get(6, 5);	// D3: echo, D2: trigger
+ 		val = (uint16_t) ultrasound_get(2, 3);	// en tacometro D3: echo, D2: trigger
+ 		//val = (uint16_t) ultrasound_get(6, 5);	// en giro ruedas
 		calibrar((uint16_t) val);
 		estado = detectar_taco((uint16_t) val, 4);
 
