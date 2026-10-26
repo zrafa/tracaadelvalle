@@ -123,7 +123,7 @@ int main()
 		t = read_buf;
 		c = 0;
 		while (c < num_bytes) {
-			if ((*t) == '\r') {
+			if ((*t) == '\n') {
 				printf(" %lld %lld ", microsegundos(), microsegundos()/1000);
 				fflush(0);
 			}
