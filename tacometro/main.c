@@ -5,11 +5,18 @@
  * COMANDOS POSIBLES por SERIAL
  * 0x1A : reporta distancia (alta frecuencia > 100hz )
  * 0x1B : reporta velocidad (baja frecuencia: aprox entre 4hz a 10hz) 
- * 0b0XXXXXXX : establece distancia recorrida por flanco de taco                                                                   
- *        Este ultimo comando estable cuanta distancia se recorrió por                                                             
- *        cada flanco de taco de la rueda. EN mm/s.                                                                                
- *        Para calibrar: recorrer con el tractor X mts y contar Y flancos.                                                         
- *                       X * 1000 / Y = Z mm recorrido por flanco.   
+ * 0b0XXXXXXX : establece distancia recorrida por flanco de taco
+ *        Este ultimo comando estable cuanta distancia se recorrió por
+ *        cada flanco de taco de la rueda. EN mm/s.
+ *        Para calibrar: recorrer con el tractor X mts y contar Y flancos.
+ *                       X * 1000 / Y = Z mm recorrido por flanco.
+ *
+ * ATENCION: la autocalibracion por tacos, y stop de calibracion, funciona si 
+ +           el sistema inicia luego de un reset en modo reporta velocidad. 
+ *           Si es asi, se cuentan tacos hasta CANT_TACOS_AUTO_CALIBRACION 
+ *           y se detiene la calibracion.
+ *           Si se inicia en modo reporta distancia se continuará la 
+ *           calibracion hasta que se ingrese al modo reporta velocidad.
  */
 
 #include <util/delay.h>
@@ -28,6 +35,11 @@
 
 #define CMD_MODE_MASK 0x80
 #define CMD_MODE 0x80
+
+#define CANT_TACOS_AUTO_CALIBRACION 15
+
+/* sample_n son la cantidad de tacos impresos. Definida en velocidad.c */
+extern uint16_t sample_n;
 
 void procesar_comando(uint8_t comando);
 
@@ -65,7 +77,10 @@ void main()
 		/* obtener una distancia del ultrasound, calibramos, detectamos */
  		val = (uint16_t) ultrasound_get(2, 3);	// en tacometro D3: echo, D2: trigger
  		//val = (uint16_t) ultrasound_get(6, 5);	// en giro ruedas
-		calibrar((uint16_t) val);
+
+		if (sample_n <= CANT_TACOS_AUTO_CALIBRACION)
+			calibrar((uint16_t) val);
+
 		estado = detectar_taco((uint16_t) val, 4);
 
 		if (tacometro_get_mode() == CMD_REPORTAR_VELOCIDAD) {
