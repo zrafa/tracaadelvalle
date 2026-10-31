@@ -43,7 +43,7 @@
 //      (0 = este, antihorario +), así que entra directo al filtro (solo se normaliza a [-pi,pi]).
 //   5. El sensor de posición entrega x,y ENU directamente (ya no hay lat/lon).
 //
-//  Compilar:  g++ -O2 -std=c++17 -Wall -pthread ekf_zmq.cpp -o ekf_zmq -lzmq
+//  Compilar:  g++ -O2 -std=c++17 -Wall -pthread ekf_zmq.cpp pub_sub.cpp -o ekf_zmq -lzmq
 //  Usar:      ./ekf_zmq                      (corre hasta Ctrl-C)
 //             ./ekf_zmq --fin-por-silencio   (termina solo si no llegan datos por 3 s; para pruebas)
 // ============================================================================
@@ -73,155 +73,8 @@
 
 #include "protocolo.h"    // PI, L, Y_RUEDA, ANTENA_*, SIGMA_*, puertos, wrap_pi, rumbo_a_psi
 
-// ============================================================================
-//  CONFIGURACIÓN
-// ============================================================================
-
-// ---- Reordenamiento ----
-static const double HISTORIA_S = 5.0;    // cuánto pasado se guarda para poder corregir datos tardíos [s]
-                                         // (debe superar el mayor retraso de cualquier sensor)
-static const size_t CAP_COLA   = 20000;  // capacidad máxima de la cola receptor -> EKF
-
-// ---- Ruido de PROCESO (continuo: se multiplica por dt, así no depende de cuántos eventos lleguen) ----
-static const double RUIDO_POS = 0.05;    // random walk en x,y   [m / sqrt(s)]
-static const double RUIDO_V   = 0.10;    // aceleración desconocida [(m/s) / sqrt(s)]
-static const double RUIDO_PSI = 0.05;   // giro de rumbo NO explicado por el modelo [rad / sqrt(s)]
-                                         // (más alto = el filtro sigue más de cerca al INS)
-//  (SIGMA_DELTA, del protocolo, entra en el ruido de psi)
-
-// ---- Compuerta de innovación ----
-// Se rechaza una medición si innovación^2 / S > COMPUERTA. 9.0 = 3 sigmas. 0 = desactivada.
-static const double COMPUERTA = 0.0;         // para pos y vel. 0 = nunca se rechaza (9.0 = rechaza a 3 sigmas)
-static const double COMPUERTA_RUMBO = 0.0;  // para el rumbo del INS. 0 = nunca se rechaza
-
-// ---- Arranque en frío: el filtro no sabe nada, así que parte con incertidumbre enorme ----
-static const double ARR_STD_XY  = 100.0; // [m]
-static const double ARR_STD_PSI = PI;    // [rad]
-static const double ARR_STD_V   = 5.0;   // [m/s]
-static const double MARGEN_INICIO_S = 0.5; // el estado inicial se fecha 0.5 s antes del primer evento
-
-// ---- Evaluación contra ground truth (solo pruebas) ----
-static const double CONVERGENCIA_S = 5.0;   // no se mide el error hasta 5 s después de tener pos+vel+rumbo
-static const double IMPRIMIR_CADA_S = 5.0;
-static const double SILENCIO_FIN_S = 3.0;
-
-// Índices de las filas de z
-enum { Z_X = 0, Z_Y = 1, Z_V = 2, Z_PSI = 3 };
-
-// ============================================================================
-//  Mensajes y COLA  (receptor -> EKF)
-// ============================================================================
-enum Tipo { T_GIRO = 0, T_VEL, T_RUMBO, T_POS, T_GT, T_N };
-static const char *NOMBRE_TIPO[T_N] = { "giro", "vel", "rumbo", "pos", "gt" };
-
-struct Mensaje {
-    Tipo   tipo;
-    double t;              // timestamp del dato (cuándo se midió)
-    double a, b, c, d;     // valores (según el tipo, ver protocolo.h)
-    double t_rx;           // cuándo lo recibimos (solo para estadísticas de retraso)
-};
-
-static std::mutex              g_mx;
-static std::condition_variable g_cv;
-static std::deque<Mensaje>     g_cola;
-static size_t                  g_cola_max = 0;       // máxima ocupación vista
-static size_t                  g_cola_perdidos = 0;  // mensajes descartados por cola llena
-static std::atomic<long>       g_malformados{0};
-static std::atomic<bool>       g_salir{false};
-
-static double ahora_epoch(void)
-{
-    using namespace std::chrono;
-    return duration<double>(system_clock::now().time_since_epoch()).count();
-}
-
-// El receptor llama a esto. Lock corto, nunca espera al EKF.
-static void cola_poner(const Mensaje &m)
-{
-    {
-        std::lock_guard<std::mutex> lk(g_mx);
-        if (g_cola.size() >= CAP_COLA) {      // EKF muy atrasado: tiramos lo más viejo
-            g_cola.pop_front();
-            g_cola_perdidos++;
-        }
-        g_cola.push_back(m);
-        if (g_cola.size() > g_cola_max) g_cola_max = g_cola.size();
-    }
-    g_cv.notify_one();                         // <- "llegó un dato nuevo", despierta al EKF
-}
-
-// El EKF duerme hasta que haya algo (o pase timeout_ms) y se lleva TODO lo que haya en un solo lock.
-static void cola_sacar_todo(std::vector<Mensaje> &out, int timeout_ms)
-{
-    std::unique_lock<std::mutex> lk(g_mx);
-    g_cv.wait_for(lk, std::chrono::milliseconds(timeout_ms), [] { return !g_cola.empty(); });
-    out.assign(g_cola.begin(), g_cola.end());
-    g_cola.clear();
-}
-
-// ============================================================================
-//  Hilo receptor (zmq)
-// ============================================================================
-
-// "topico timestamp v1 v2 ..."  ->  Mensaje.   false si está mal formado.
-static bool parsear(const char *s, Mensaje &m)
-{
-    char top[16];
-    double t, a = 0, b = 0, c = 0, d = 0;
-    int n = sscanf(s, "%15s %lf %lf %lf %lf %lf", top, &t, &a, &b, &c, &d);
-    int necesarios;
-
-    if      (!strcmp(top, TOP_GIRO))  { m.tipo = T_GIRO;  necesarios = 3; }
-    else if (!strcmp(top, TOP_VEL))   { m.tipo = T_VEL;   necesarios = 3; }
-    else if (!strcmp(top, TOP_RUMBO)) { m.tipo = T_RUMBO; necesarios = 3; }
-    else if (!strcmp(top, TOP_POS))   { m.tipo = T_POS;   necesarios = 4; }
-    else if (!strcmp(top, TOP_GT))    { m.tipo = T_GT;    necesarios = 6; }
-    else return false;
-
-    if (n < necesarios) return false;
-    m.t = t; m.a = a; m.b = b; m.c = c; m.d = d;
-    return true;
-}
-
-static void hilo_receptor(void *ctx)
-{
-    // Un socket zmq NO es thread-safe: se crea y se usa solo en este hilo.
-    void *sub = zmq_socket(ctx, ZMQ_SUB);
-
-    int timeout_ms = 100;   // para poder revisar g_salir
-    int linger = 0;
-    int hwm = 100000;       // el buffer interno de zmq también es amplio
-    zmq_setsockopt(sub, ZMQ_RCVTIMEO, &timeout_ms, sizeof timeout_ms);
-    zmq_setsockopt(sub, ZMQ_LINGER,   &linger,     sizeof linger);
-    zmq_setsockopt(sub, ZMQ_RCVHWM,   &hwm,        sizeof hwm);
-
-    // Un único SUB conectado a todos los publicadores. El prefijo lleva espacio: "vel " no matchea "velx".
-    const char *topicos[] = { TOP_GIRO " ", TOP_VEL " ", TOP_RUMBO " ", TOP_POS " ", TOP_GT " " };
-    const int   puertos[] = { PUERTO_GIRO, PUERTO_VEL, PUERTO_RUMBO, PUERTO_POS, PUERTO_GT };
-    for (int i = 0; i < 5; i++) {
-        zmq_setsockopt(sub, ZMQ_SUBSCRIBE, topicos[i], strlen(topicos[i]));
-        char ep[64];
-        snprintf(ep, sizeof ep, "tcp://%s:%d", HOST, puertos[i]);
-        zmq_connect(sub, ep);   // si el publicador aún no existe, zmq reintenta solo
-    }
-
-    char buffer[256];
-    while (!g_salir) {
-        int n = zmq_recv(sub, buffer, sizeof(buffer) - 1, 0);
-        if (n < 0) {
-            if (errno == ETERM) break;
-            continue;                                   // timeout o interrupción
-        }
-        if (n > (int)sizeof(buffer) - 1) { g_malformados++; continue; }   // mensaje truncado
-        buffer[n] = '\0';
-
-        Mensaje m;
-        if (!parsear(buffer, m)) { g_malformados++; continue; }
-        m.t_rx = ahora_epoch();
-        cola_poner(m);
-    }
-    zmq_close(sub);
-}
+#include "config_ekf.h"   // CONFIGURACIÓN (parámetros)
+#include "pub_sub.h"        // Mensaje, cola, hilo_receptor (recepción zmq)
 
 // ============================================================================
 //  El filtro (casi igual a la versión 2)
