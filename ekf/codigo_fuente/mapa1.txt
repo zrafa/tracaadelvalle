@@ -1,0 +1,53 @@
+      pos_metros: 0		0
+      pos_metros: 3.04545		0
+      pos_metros: 3.56998		0
+      pos_metros: 9.13636		0
+      pos_metros: 15.2273		0
+      pos_metros: 16.1509		0
+      pos_metros: 18.2727		0
+      pos_metros: 21.3182		0
+      pos_metros: 24.3636		0
+      pos_metros: 27.4091		0
+      pos_metros: 27.2992		0
+      pos_metros: 33.5		0
+      pos_metros: 36.5455		0
+      pos_metros: 39.5909		0
+      pos_metros: 38.6326		0
+      pos_metros: 39.5374		0
+      pos_metros: 42.6364		0
+      pos_metros: 45.6818		0
+      pos_metros: 48.7273		0
+      pos_metros: 51.7727		0
+      pos_metros: 53.0444		0
+      pos_metros: 54.8182		0
+      pos_metros: 57.8636		0
+      pos_metros: 60.9091		0
+      pos_metros: 63.4972		0
+      pos_metros: 63.9545		0
+      pos_metros: 67		0
+
+
+
+      pos_metros: 0		3.8
+      pos_metros: 3.04545		3.8
+      pos_metros: 9.13636		3.8
+      pos_metros: 15.2273		3.8
+      pos_metros: 18.2727		3.8
+      pos_metros: 21.3182		3.8
+      pos_metros: 24.3636		3.8
+      pos_metros: 27.4091		3.8
+      pos_metros: 33.5		3.8
+      pos_metros: 36.5455		3.8
+      pos_metros: 39.5909		3.8
+      pos_metros: 42.6364		3.8
+      pos_metros: 45.6818		3.8
+      pos_metros: 48.7273		3.8
+      pos_metros: 51.7727		3.8
+      pos_metros: 54.8182		3.8
+      pos_metros: 57.8636		3.8
+      pos_metros: 60.9091		3.8
+      pos_metros: 63.9545		3.8
+      pos_metros: 67		3.8
+
+
+
