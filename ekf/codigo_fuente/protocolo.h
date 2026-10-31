@@ -50,7 +50,7 @@ static const double ANTENA_Y = 0.2;   // sensor de posición: a la izquierda del
 static const double SIGMA_DELTA = 0.02;  // giro de ruedas [rad]
 static const double SIGMA_VW    = 0.10;  // velocidad [m/s]
 static const double SIGMA_INS   = 0.02;  // rumbo del INS [rad]
-static const double SIGMA_POS   = 0.50;  // posición, por eje [m]
+static const double SIGMA_POS   = 0.10;  // posición, por eje [m]
 
 // ---- Red ----
 static const char *const HOST = "127.0.0.1";
