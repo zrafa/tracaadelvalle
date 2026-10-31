@@ -32,6 +32,21 @@ static const double ANTENA_Y = 0.2;   // sensor de posición: a la izquierda del
                                       // (poner ambos en 0 si la posición ya es la del eje trasero)
 
 // ---- Ruido de los sensores (el EKF lo usa como R; los publicadores para simular) ----
+/* 
+ *  REPASO de nuestro ruidos de los sensores acá:
+ *
+ *	Constante	Valor	
+ *	SIGMA_DELTA	0.02	giro de ruedas: ±0.02 rad (≈1.1°)
+ *	SIGMA_VW	0.10	velocidad: ±0.10 m/s
+ *	SIGMA_INS	0.02	rumbo: ±0.02 rad (≈1.1°)
+ *	SIGMA_POS	0.50	posición: ±0.5 m por eje
+ *	68 % de las lecturas caen dentro de ±σ del valor real, y alrededor del 
+ *      95 % dentro de ±2σ.
+ *	Rango: cualquier valor mayor que 0, sin tope. Un GPS malo puede tener 
+ *      SIGMA_POS = 5.0. No ponga 0, porque el filtro asumiría un sensor perfecto.
+ *	Cuanto mayor menos confía el filtro en ese sensor y más se apoya en el
+ *      modelo y en los demás sensores. Cuanto menor, más lo sigue.
+*/
 static const double SIGMA_DELTA = 0.02;  // giro de ruedas [rad]
 static const double SIGMA_VW    = 0.10;  // velocidad [m/s]
 static const double SIGMA_INS   = 0.02;  // rumbo del INS [rad]
