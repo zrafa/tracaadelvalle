@@ -37,6 +37,9 @@ Logré medir 30mts lineales en campo.
 Avanzaremos con el tractor los 30mts contando "ticks/pulsos" del sensor.
 Luego dividimos 30000 mm / cant. ticks = cant. mm por tick/pulso.
 
+cant. ticks en 29,8mts : 336
+30000 mm / cant. ticks = 89.28 cant. mm por tick/pulso.
+
 1. Si hay error en la medición de los 30 m que hicimos, con el laser, 
    supongamos, de +/- 3 metros, eso dará +/- 10mm de error final en la calibración.
    El laser tiene precisión de mm, sólo que puede haber error manual al salir 
