@@ -14,7 +14,7 @@ set size ratio -1
 plot "tray3.2.txt" using 7:9 with points pt 1 ps 1 lc rgb "green" title "INS", \
  "tray3.3.txt" using 7:9 with points pt 1 ps 1 lc rgb "red" title "velocidad", \
  "tray3.1.txt" using 8:10 with points pt 4 ps 1 lc rgb "blue" title "pos-fingerprint", \
- "mapa1.txt" using 2:3 with points pt 7 ps 1   lc rgb "black" title "frutal", \
- "mapa2.txt" using 2:3 with points pt 7 ps 1   lc rgb "black" title "frutal"
+ "mapa1.2.txt" using 2:3 with points pt 7 ps 1   lc rgb "black" title "frutal", \
+ "mapa2.2.txt" using 2:3 with points pt 7 ps 1   lc rgb "black" title "frutal"
 
 pause -1 "Presiona Enter para salir"
